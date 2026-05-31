@@ -146,7 +146,7 @@ python scripts/run_pipeline.py --all \
 
 | Setting | Value | Source |
 |---------|-------|--------|
-| Base model | `runwayml/stable-diffusion-v1-5` | Rombach et al. 2022 |
+| Base model | `stable-diffusion-v1-5/stable-diffusion-v1-5` | Rombach et al. 2022 |
 | LoRA rank / alpha | 8 / 8 | diffusers default, validated for small-domain LoRA |
 | Learning rate | 1 e-4 (AdamW) | diffusers `train_text_to_image_lora.py` |
 | Train batch size | 1 × grad-accum 4 = 4 effective | fits a 12 GB GPU at 512 px fp16 |

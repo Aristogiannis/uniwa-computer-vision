@@ -23,6 +23,19 @@ DISASTER_PROMPT_TEMPLATES: dict[str, list[str]] = {
     "post_disaster": [
         "a satellite image of disaster aftermath, damaged buildings and disturbed ground, remote sensing",
     ],
+    # EuroSAT land-cover classes — used as a proxy when xBD is not available.
+    "forest": [
+        "a satellite image of a dense forest, green canopy, overhead remote sensing photograph",
+        "an aerial overhead view of a deciduous forest, continuous green tree cover",
+    ],
+    "river": [
+        "a satellite image of a river winding through land, water and vegetation, overhead remote sensing photograph",
+        "an aerial overhead view of a river with curved banks and surrounding terrain",
+    ],
+    "residential_buildings": [
+        "a satellite image of a residential neighbourhood, rows of houses and gardens, overhead remote sensing photograph",
+        "an aerial overhead view of a suburban residential area with streets and rooftops",
+    ],
 }
 
 

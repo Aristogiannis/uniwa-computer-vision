@@ -68,7 +68,7 @@ class GenerationJob:
 @dataclass
 class GenerationRunConfig:
     output_dir: str = "data/synthetic"
-    base_model_id: str = "runwayml/stable-diffusion-v1-5"
+    base_model_id: str = "stable-diffusion-v1-5/stable-diffusion-v1-5"
     lora_weights: str | None = None
     lora_scale: float = 1.0
     num_inference_steps: int = 30

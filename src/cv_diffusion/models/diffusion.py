@@ -4,7 +4,7 @@ We avoid re-implementing the well-tested ``StableDiffusionPipeline`` — the
 wrapper exists only to:
 
 * centralise the choice of base model id (so the rest of the codebase doesn't
-  hard-code "runwayml/stable-diffusion-v1-5"),
+  hard-code "stable-diffusion-v1-5/stable-diffusion-v1-5"),
 * hide the awkward eager vs xformers attention switch behind a flag, and
 * offer a friendly ``generate(...)`` method that returns a list of PIL images.
 """
@@ -19,7 +19,7 @@ from cv_diffusion.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
-DEFAULT_MODEL_ID = "runwayml/stable-diffusion-v1-5"
+DEFAULT_MODEL_ID = "stable-diffusion-v1-5/stable-diffusion-v1-5"
 
 
 @dataclass

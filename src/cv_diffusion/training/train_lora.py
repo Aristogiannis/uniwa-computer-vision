@@ -44,7 +44,7 @@ class TrainLoRAConfig:
     dataset on a single 12–16 GB consumer GPU.
     """
 
-    pretrained_model_id: str = "runwayml/stable-diffusion-v1-5"
+    pretrained_model_id: str = "stable-diffusion-v1-5/stable-diffusion-v1-5"
     revision: Optional[str] = None
     output_dir: str = "outputs/lora"
     train_data_dir: Optional[str] = None

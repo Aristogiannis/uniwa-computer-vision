@@ -1,7 +1,7 @@
 # LoRA fine-tuning of Stable Diffusion v1.5 on the disaster tile dataset.
 # Tuned for a single 12-16 GB consumer GPU (T4/P100/3060/4060). See docs/methodology.md.
 
-pretrained_model_id: runwayml/stable-diffusion-v1-5
+pretrained_model_id: stable-diffusion-v1-5/stable-diffusion-v1-5
 output_dir: outputs/lora/sd15_disaster
 train_data_dir: data/processed/xbd_tiles
 train_manifest_csv: null
