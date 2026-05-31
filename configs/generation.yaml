@@ -1,0 +1,25 @@
+# Default synthetic-image generation configuration.
+# Used by the cv-generate CLI.
+
+generation:
+  output_dir: data/synthetic
+  base_model_id: runwayml/stable-diffusion-v1-5
+  lora_weights: outputs/lora/sd15_disaster
+  lora_scale: 1.0
+  num_inference_steps: 30
+  guidance_scale: 7.5
+  height: 512
+  width: 512
+  batch_size: 4
+  seed: 12345
+  scheduler: dpm++_2m
+  torch_dtype: float16
+  negative_prompt: "low resolution, blurry, oversaturated, cartoon, illustration, painting, people, faces, text, watermark, photoshopped, dramatic lighting"
+
+jobs:
+  - category: pre_disaster
+    num_images: 200
+  - category: flood
+    num_images: 200
+  - category: wildfire
+    num_images: 200

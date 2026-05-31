@@ -1,0 +1,28 @@
+# Optional SDXL configuration. Requires >=16 GB VRAM (24 GB comfortable).
+# Use only if you have access to an A100/L4/4090 or paid Colab Pro+.
+
+pretrained_model_id: stabilityai/stable-diffusion-xl-base-1.0
+output_dir: outputs/lora/sdxl_disaster
+train_data_dir: data/processed/xbd_tiles
+resolution: 1024
+center_crop: true
+random_flip: true
+train_batch_size: 1
+gradient_accumulation_steps: 4
+gradient_checkpointing: true
+num_train_epochs: 50
+max_train_steps: 3000
+learning_rate: 5.0e-5
+lr_scheduler: cosine
+mixed_precision: fp16
+seed: 42
+
+lora:
+  rank: 16
+  alpha: 16
+  dropout: 0.0
+  target_modules:
+    - to_q
+    - to_k
+    - to_v
+    - to_out.0

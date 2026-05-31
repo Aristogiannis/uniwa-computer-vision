@@ -1,0 +1,111 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cv-diffusion"
+version = "0.1.0"
+description = "Diffusion-based synthetic satellite image generation for natural-disaster data augmentation (floods, wildfires)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "UniWA — Computer Vision Course Project" },
+]
+keywords = [
+    "diffusion-models",
+    "stable-diffusion",
+    "lora",
+    "satellite-imagery",
+    "remote-sensing",
+    "disaster-detection",
+    "data-augmentation",
+    "computer-vision",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+dependencies = [
+    "torch>=2.2",
+    "torchvision>=0.17",
+    "diffusers>=0.27",
+    "transformers>=4.40",
+    "accelerate>=0.30",
+    "peft>=0.10",
+    "safetensors>=0.4",
+    "datasets>=2.18",
+    "huggingface-hub>=0.23",
+    "Pillow>=10.0",
+    "numpy>=1.24,<2.0",
+    "pandas>=2.0",
+    "tqdm>=4.66",
+    "PyYAML>=6.0",
+    "scikit-image>=0.22",
+    "scikit-learn>=1.3",
+    "torchmetrics>=1.3",
+    "clean-fid>=0.1.35",
+    "timm>=0.9.16",
+    "rasterio>=1.3",
+    "tifffile>=2024.2.12",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "tensorboard>=2.16",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "ruff>=0.4",
+    "black>=24.3",
+    "jupyterlab>=4.0",
+    "ipywidgets>=8.0",
+]
+demo = [
+    "gradio>=4.20",
+]
+
+[project.scripts]
+cv-preprocess = "cv_diffusion.cli.preprocess:main"
+cv-train-lora = "cv_diffusion.cli.train_lora:main"
+cv-generate = "cv_diffusion.cli.generate:main"
+cv-train-classifier = "cv_diffusion.cli.train_classifier:main"
+cv-evaluate = "cv_diffusion.cli.evaluate:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["cv_diffusion*"]
+
+[tool.setuptools.package-data]
+cv_diffusion = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["cv_diffusion"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra --strict-markers"
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "gpu: marks tests that require a CUDA GPU",
+]

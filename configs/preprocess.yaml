@@ -1,0 +1,11 @@
+# Default preprocessing pipeline configuration.
+# Targets the xBD layout: large 1024x1024 RGB tiles -> 512x512 SD-ready tiles.
+
+input_dir: data/raw/xbd
+output_dir: data/processed/xbd_tiles
+tile_size: 512
+stride: 512
+drop_partial: true
+percentile_lower: 2.0
+percentile_upper: 98.0
+recursive: true

@@ -1,0 +1,20 @@
+# Downstream disaster classifier configuration (single arm).
+
+classifier:
+  train_root: data/processed/xbd_classifier/train
+  val_root: data/processed/xbd_classifier/val
+  test_root: data/processed/xbd_classifier/test
+  output_dir: outputs/classifier/real_only
+  backbone: resnet18
+  pretrained: true
+  image_size: 224
+  batch_size: 32
+  num_workers: 4
+  epochs: 20
+  learning_rate: 3.0e-4
+  weight_decay: 1.0e-4
+  label_smoothing: 0.05
+  early_stop_patience: 5
+  seed: 42
+  mixed_precision: true
+  class_weights: true

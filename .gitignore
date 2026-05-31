@@ -1,0 +1,60 @@
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.python-version
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Logs & runs
+logs/
+runs/
+wandb/
+lightning_logs/
+outputs/
+tensorboard/
+
+# Project-specific large artifacts
+data/raw/**
+data/processed/**
+data/synthetic/**
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/synthetic/.gitkeep
+checkpoints/
+*.ckpt
+*.safetensors
+*.bin
+*.pth
+
+# Hugging Face cache
+.cache/
+huggingface/

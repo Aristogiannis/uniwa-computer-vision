@@ -1,0 +1,44 @@
+# LoRA fine-tuning of Stable Diffusion v1.5 on the disaster tile dataset.
+# Tuned for a single 12-16 GB consumer GPU (T4/P100/3060/4060). See docs/methodology.md.
+
+pretrained_model_id: runwayml/stable-diffusion-v1-5
+output_dir: outputs/lora/sd15_disaster
+train_data_dir: data/processed/xbd_tiles
+train_manifest_csv: null
+resolution: 512
+center_crop: true
+random_flip: true
+train_batch_size: 1
+gradient_accumulation_steps: 4
+gradient_checkpointing: true
+num_train_epochs: 100
+max_train_steps: 4000
+learning_rate: 1.0e-4
+lr_scheduler: cosine
+lr_warmup_steps: 0
+adam_beta1: 0.9
+adam_beta2: 0.999
+adam_weight_decay: 0.01
+adam_epsilon: 1.0e-8
+max_grad_norm: 1.0
+mixed_precision: fp16
+seed: 42
+log_every: 25
+checkpointing_steps: 500
+validation_prompt: "a satellite image of severe flooding, brown water covering buildings, post-disaster remote sensing"
+num_validation_images: 4
+
+lora:
+  rank: 8
+  alpha: 8
+  dropout: 0.0
+  target_modules:
+    - to_q
+    - to_k
+    - to_v
+    - to_out.0
+  bias: none
+  init_lora_weights: true
+  train_text_encoder: false
+  text_encoder_lr: 5.0e-6
+  unet_lr: 1.0e-4

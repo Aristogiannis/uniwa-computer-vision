@@ -1,0 +1,39 @@
+# Core deep learning stack
+torch>=2.2
+torchvision>=0.17
+
+# Diffusion models / LoRA
+diffusers>=0.27
+transformers>=4.40
+accelerate>=0.30
+peft>=0.10
+safetensors>=0.4
+
+# Data / HF tooling
+datasets>=2.18
+huggingface-hub>=0.23
+
+# Imaging
+Pillow>=10.0
+scikit-image>=0.22
+rasterio>=1.3
+tifffile>=2024.2.12
+
+# Numerics / utilities
+numpy>=1.24,<2.0
+pandas>=2.0
+tqdm>=4.66
+PyYAML>=6.0
+
+# Evaluation
+torchmetrics>=1.3
+clean-fid>=0.1.35
+scikit-learn>=1.3
+
+# Classifier backbone library
+timm>=0.9.16
+
+# Plotting and logging
+matplotlib>=3.8
+seaborn>=0.13
+tensorboard>=2.16
