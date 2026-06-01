@@ -72,14 +72,26 @@ CLF_EPOCHS = 8 if not SMOKE else 1
 
 print(f"SMOKE={SMOKE} | LORA_STEPS={LORA_STEPS} | SYNTH_PER_CLASS={SYNTH_PER_CLASS} | CLF_EPOCHS={CLF_EPOCHS}")"""),
 
-    md("## 1. Clone repo + install"),
+    md("""## 1. Clone repo + install + GPU sanity check
+
+**Set the kernel Accelerator to `GPU T4 x1`** (sm_75). P100 (sm_60) tripped
+the LoRA step in earlier runs — the cause was the active PyTorch build not
+shipping sm_60 kernels for some of the fp16 ops the diffusers trainer uses."""),
     code(f"""!git clone --depth 1 {REPO_URL} /kaggle/working/cv-diffusion
 %cd /kaggle/working/cv-diffusion
 !pip install -q --upgrade pip
-!pip install -q -e ".[dev]"
-import torch
-print("torch:", torch.__version__, "cuda:", torch.cuda.is_available(),
-      "device:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU")"""),
+# install the package itself but reuse Kaggle's preinstalled torch/numpy/pandas
+!pip install -q -e . --no-deps
+!pip install -q diffusers transformers accelerate peft safetensors \\
+                huggingface-hub clean-fid timm pyarrow tifffile rasterio
+import torch, subprocess
+print("torch:", torch.__version__, "cuda available:", torch.cuda.is_available())
+if torch.cuda.is_available():
+    cap = torch.cuda.get_device_capability(0)
+    print(f"device: {{torch.cuda.get_device_name(0)}}  sm_{{cap[0]}}{{cap[1]}}  cuda {{torch.version.cuda}}")
+    if cap[0] < 7:
+        print("WARNING: sm_<70 detected. If LoRA crashes, switch the Accelerator to T4.")
+print(subprocess.check_output(['nvidia-smi'], text=True))"""),
 
     md("""## 2. Download EuroSAT (parquet) and extract to ImageFolder
 
@@ -157,27 +169,45 @@ for cls in CLASSES:
     md("""## 4. LoRA fine-tune SD 1.5
 
 Step count, resolution and seed are taken from the `SMOKE` toggle in cell 2.
-The CLI streams its loss curve to `/kaggle/working/outputs/lora_train.log`."""),
+The CLI streams its loss curve to `/kaggle/working/outputs/lora_train.log`
+**and** we tee both stdout+stderr to `/kaggle/working/outputs/lora_traceback.log`
+— so even if the kernel dies, the traceback survives on disk and the cell
+output also prints the last 200 lines automatically on failure."""),
 
-    code("""import subprocess, shlex
-cmd = f'''cv-train-lora \\
-  --train-data-dir /kaggle/working/proxy/lora_train \\
-  --output-dir /kaggle/working/outputs/lora/sd15_proxy \\
-  --pretrained-model-id stable-diffusion-v1-5/stable-diffusion-v1-5 \\
-  --resolution {LORA_RESOLUTION} \\
-  --max-train-steps {LORA_STEPS} \\
-  --train-batch-size 1 \\
-  --gradient-accumulation-steps 4 \\
-  --mixed-precision fp16 \\
-  --rank 8 --alpha 8 \\
-  --learning-rate 1e-4 \\
-  --seed 42 \\
-  --log-file /kaggle/working/outputs/lora_train.log'''
-print(cmd)
-rc = subprocess.call(shlex.split(cmd))
-print("LoRA training exit code:", rc)
-assert rc == 0, "LoRA training failed — check /kaggle/working/outputs/lora_train.log"
-"""),
+    code("""import subprocess
+from pathlib import Path
+
+Path("/kaggle/working/outputs").mkdir(parents=True, exist_ok=True)
+TRACEBACK_LOG = "/kaggle/working/outputs/lora_traceback.log"
+
+lora_cmd = (
+    f"cv-train-lora "
+    f"--train-data-dir /kaggle/working/proxy/lora_train "
+    f"--output-dir /kaggle/working/outputs/lora/sd15_proxy "
+    f"--pretrained-model-id stable-diffusion-v1-5/stable-diffusion-v1-5 "
+    f"--resolution {LORA_RESOLUTION} "
+    f"--max-train-steps {LORA_STEPS} "
+    f"--train-batch-size 1 "
+    f"--gradient-accumulation-steps 4 "
+    f"--mixed-precision fp16 "
+    f"--rank 8 --alpha 8 "
+    f"--learning-rate 1e-4 "
+    f"--seed 42 "
+    f"--log-file /kaggle/working/outputs/lora_train.log"
+)
+print("Running:", lora_cmd)
+print("Tracing  :", TRACEBACK_LOG)
+
+# bash -c with pipefail so the pipe's exit code is meaningful.
+full = f"set -o pipefail; {lora_cmd} 2>&1 | tee {TRACEBACK_LOG}"
+result = subprocess.run(["bash", "-c", full])
+rc = result.returncode
+print(f"\\nLoRA exit code: {rc}")
+
+if rc != 0:
+    print(f"\\n=== last 200 lines of {TRACEBACK_LOG} ===")
+    subprocess.run(["tail", "-n", "200", TRACEBACK_LOG])
+    raise SystemExit(f"LoRA training failed (rc={rc}). Traceback log: {TRACEBACK_LOG}")"""),
 
     md("## 5. Generate synthetic images per class"),
 
