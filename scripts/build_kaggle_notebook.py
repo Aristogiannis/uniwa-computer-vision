@@ -378,10 +378,29 @@ fig.tight_layout()
 fig.savefig("/kaggle/working/outputs/qualitative.png", dpi=140, bbox_inches='tight')
 plt.show()"""),
 
-    md("""## 9. Download artifacts
+    md("""## 9. Bundle results into a single tar.gz
 
-After the run finishes, download `/kaggle/working/outputs/` from the Kaggle
-file browser — it contains:
+The Kaggle /kernels/output endpoint paginates and rate-limits the file list.
+The notebook persists *all* of /kaggle/working/ (cv-diffusion repo, EuroSAT
+raw + extracted, intermediate proxy data) — 27k+ files. To make local
+download trivial, we tar-gz only what's actually wanted into one file."""),
+
+    code("""import tarfile, os
+ARCHIVE = "/kaggle/working/results.tar.gz"
+PATHS = [
+    "/kaggle/working/outputs",            # LoRA adapter, arms/*, three_arm_summary.json
+    "/kaggle/working/proxy/synthetic",    # 48 synthetic images
+]
+with tarfile.open(ARCHIVE, "w:gz") as tar:
+    for p in PATHS:
+        if os.path.exists(p):
+            tar.add(p, arcname=os.path.basename(p))
+print(f"wrote {ARCHIVE}  ({os.path.getsize(ARCHIVE) / 1e6:.1f} MB)")"""),
+
+    md("""## 11. Download artifacts
+
+After the run finishes, pull `/kaggle/working/results.tar.gz` from the
+local CLI runner — it contains:
 
 * `outputs/lora/sd15_proxy/` — LoRA adapter weights (`pytorch_lora_weights.safetensors`)
 * `outputs/arms/*/test_report.json` — per-arm metrics
