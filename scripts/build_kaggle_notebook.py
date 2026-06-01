@@ -78,7 +78,7 @@ LORA_STEPS = 4000 if not SMOKE else 200
 # Classifier arms epochs.
 CLF_EPOCHS = 8 if not SMOKE else 1
 
-print(f"SMOKE={SMOKE} | LORA_STEPS={LORA_STEPS} | SYNTH_PER_CLASS={SYNTH_PER_CLASS} | CLF_EPOCHS={CLF_EPOCHS}")"""),
+print(f"SMOKE={{SMOKE}} | LORA_STEPS={{LORA_STEPS}} | SYNTH_PER_CLASS={{SYNTH_PER_CLASS}} | CLF_EPOCHS={{CLF_EPOCHS}}")"""),
 
     md("""## 1. Clone repo + install + GPU sanity check
 
