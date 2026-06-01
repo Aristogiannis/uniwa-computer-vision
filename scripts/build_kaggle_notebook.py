@@ -84,14 +84,20 @@ shipping sm_60 kernels for some of the fp16 ops the diffusers trainer uses."""),
 !pip install -q -e . --no-deps
 !pip install -q diffusers transformers accelerate peft safetensors \\
                 huggingface-hub clean-fid timm pyarrow tifffile rasterio
-import torch, subprocess
+import sys, torch, subprocess
 print("torch:", torch.__version__, "cuda available:", torch.cuda.is_available())
-if torch.cuda.is_available():
-    cap = torch.cuda.get_device_capability(0)
-    print(f"device: {{torch.cuda.get_device_name(0)}}  sm_{{cap[0]}}{{cap[1]}}  cuda {{torch.version.cuda}}")
-    if cap[0] < 7:
-        print("WARNING: sm_<70 detected. If LoRA crashes, switch the Accelerator to T4.")
-print(subprocess.check_output(['nvidia-smi'], text=True))"""),
+if not torch.cuda.is_available():
+    sys.exit("FATAL: no CUDA. Set Accelerator to GPU T4 x2 (Settings -> Accelerator).")
+cap = torch.cuda.get_device_capability(0)
+name = torch.cuda.get_device_name(0)
+print(f"device: {{name}}  sm_{{cap[0]}}{{cap[1]}}  cuda {{torch.version.cuda}}")
+print(subprocess.check_output(['nvidia-smi'], text=True))
+if cap[0] < 7:
+    sys.exit(
+        f"FATAL: {{name}} is sm_{{cap[0]}}{{cap[1]}} but Kaggle's PyTorch only "
+        "ships sm_70+ kernels. Open the Kaggle notebook -> Settings -> Accelerator "
+        "-> GPU T4 x2 (sm_75), save, then re-run."
+    )"""),
 
     md("""## 2. Download EuroSAT (parquet) and extract to ImageFolder
 

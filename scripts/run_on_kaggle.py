@@ -112,6 +112,23 @@ def status(slug: str) -> dict[str, Any]:
     return r.json()
 
 
+def _get_with_retry(sess: requests.Session, url: str, params: dict, attempts: int = 6):
+    last_text = ""
+    for i in range(attempts):
+        r = sess.get(url, params=params, timeout=60)
+        if r.status_code < 400:
+            return r
+        last_text = r.text[:400]
+        # Kaggle's edge rate-limits aggressively after a burst of probes and
+        # falls through to a generic 404 HTML page once 429 quota is exhausted.
+        # Either way the recovery is the same: wait long enough for the window
+        # to reset (~60 s) and try once. Exponential backoff capped at 120 s.
+        wait = 60 if r.status_code == 429 else min(120, 2 ** (i + 3))
+        print(f"  GET {url} -> HTTP {r.status_code}; retry in {wait}s")
+        time.sleep(wait)
+    raise SystemExit(f"GET {url} kept failing: {last_text}")
+
+
 def download_output(slug: str, out_dir: Path) -> None:
     user, k = slug.split("/", 1)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -123,15 +140,17 @@ def download_output(slug: str, out_dir: Path) -> None:
         params = {"user_name": user, "kernel_slug": k, "page_size": 200}
         if page_token:
             params["page_token"] = page_token
-        r = sess.get(f"{API_ROOT}/kernels/output", params=params, timeout=60)
-        if r.status_code >= 400:
-            raise SystemExit(f"output list failed: HTTP {r.status_code}\n{r.text[:2000]}")
+        r = _get_with_retry(sess, f"{API_ROOT}/kernels/output", params)
         body = r.json()
         batch = body.get("files") if isinstance(body, dict) else body
         if batch:
             files.extend(batch)
         if log_text is None and isinstance(body, dict):
-            log_text = body.get("log") or body.get("Log")
+            log_text = (
+                body.get("log")
+                or body.get("logNullable")
+                or body.get("Log")
+            )
         page_token = body.get("nextPageToken") if isinstance(body, dict) else ""
         if not page_token:
             break
@@ -150,8 +169,16 @@ def download_output(slug: str, out_dir: Path) -> None:
                     fh.write(chunk)
         print(f"  - {name} ({dest.stat().st_size} bytes)")
     if log_text:
+        # Kaggle returns the log as a JSON-encoded list of stream entries.
+        # Try to decode -> plain text; if that fails, save the raw envelope.
+        plain: str
+        try:
+            entries = json.loads(log_text)
+            plain = "".join(e.get("data", "") for e in entries)
+        except Exception:
+            plain = log_text
         log_path = out_dir / "_kernel_log.txt"
-        log_path.write_text(log_text)
+        log_path.write_text(plain)
         print(f"  - {log_path.name} ({log_path.stat().st_size} bytes, kernel log)")
 
 
