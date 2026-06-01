@@ -84,20 +84,32 @@ shipping sm_60 kernels for some of the fp16 ops the diffusers trainer uses."""),
 !pip install -q -e . --no-deps
 !pip install -q diffusers transformers accelerate peft safetensors \\
                 huggingface-hub clean-fid timm pyarrow tifffile rasterio
-import sys, torch, subprocess
-print("torch:", torch.__version__, "cuda available:", torch.cuda.is_available())
-if not torch.cuda.is_available():
-    sys.exit("FATAL: no CUDA. Set Accelerator to GPU T4 x2 (Settings -> Accelerator).")
-cap = torch.cuda.get_device_capability(0)
-name = torch.cuda.get_device_name(0)
-print(f"device: {{name}}  sm_{{cap[0]}}{{cap[1]}}  cuda {{torch.version.cuda}}")
+import sys, subprocess
+
+# Detect GPU via nvidia-smi BEFORE importing torch — so if it's a Pascal/P100
+# (sm_60), we can swap to a sm_60-compatible torch wheel before any torch
+# import binds the bad one into the kernel process.
+smi = subprocess.check_output(['nvidia-smi', '--query-gpu=name', '--format=csv,noheader'], text=True).strip()
+print("nvidia-smi name:", smi)
 print(subprocess.check_output(['nvidia-smi'], text=True))
-if cap[0] < 7:
-    sys.exit(
-        f"FATAL: {{name}} is sm_{{cap[0]}}{{cap[1]}} but Kaggle's PyTorch only "
-        "ships sm_70+ kernels. Open the Kaggle notebook -> Settings -> Accelerator "
-        "-> GPU T4 x2 (sm_75), save, then re-run."
-    )"""),
+
+PASCAL_MARKERS = ("P100", "P40", "P4", "Pascal")
+if any(m in smi for m in PASCAL_MARKERS):
+    print(f"\\n!!! {{smi}} detected (sm_60); Kaggle's torch 2.10+cu128 only ships sm_70+ kernels.")
+    print("Installing torch 2.5.1+cu121 (last LTS with sm_60) ...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
+                           "torch==2.5.1", "torchvision==0.20.1",
+                           "--index-url", "https://download.pytorch.org/whl/cu121"])
+
+import torch
+cap = torch.cuda.get_device_capability(0) if torch.cuda.is_available() else None
+print(f"\\ntorch: {{torch.__version__}}  cuda {{torch.version.cuda}}  device: {{smi}}  sm_{{cap[0]}}{{cap[1]}} " if cap else "no cuda")
+if not torch.cuda.is_available():
+    sys.exit("FATAL: no CUDA after torch import.")
+# Sanity smoke: allocate a tiny tensor and run a matmul on GPU.
+x = torch.randn(64, 64, device='cuda', dtype=torch.float16)
+y = (x @ x).sum().item()
+print(f"GPU smoke matmul OK: tr={{y:.4f}}")"""),
 
     md("""## 2. Download EuroSAT (parquet) and extract to ImageFolder
 
