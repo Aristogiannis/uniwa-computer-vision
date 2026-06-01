@@ -229,7 +229,8 @@ if rc != 0:
 
     md("## 5. Generate synthetic images per class"),
 
-    code("""SYNTH_ROOT = "/kaggle/working/proxy/synthetic"
+    code("""import subprocess, shlex
+SYNTH_ROOT = "/kaggle/working/proxy/synthetic"
 cmd = (
     f"cv-generate "
     f"--output-dir {SYNTH_ROOT} "
@@ -305,7 +306,8 @@ for cls in CLASSES:
         im.save(d / s.name)
 print({c: len(list((SYNTH_ONLY/c).iterdir())) for c in CLASSES})"""),
 
-    code("""def run_arm(name, train_root):
+    code("""import subprocess, shlex
+def run_arm(name, train_root):
     out_dir = f"/kaggle/working/outputs/arms/{name}"
     cmd = (f"cv-train-classifier "
            f"--train-root {train_root} "
