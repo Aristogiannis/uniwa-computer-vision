@@ -1,17 +1,25 @@
 """Generate notebooks/kaggle_proxy_run.ipynb deterministically.
 
 Run from the repo root: `python scripts/build_kaggle_notebook.py`.
-We construct the notebook with `nbformat` instead of hand-writing JSON so cell
-ordering, metadata and trust state stay consistent across regenerations.
+Pass `--smoke` to emit a 10-minute validation version (200 LoRA steps,
+16 synth/class, 1 classifier epoch); default is the full-pipeline run
+(4000 steps, 200 synth/class, 8 epochs).
 """
 
 from __future__ import annotations
 
+import argparse
 import nbformat as nbf
 from pathlib import Path
 
 REPO_URL = "https://github.com/Aristogiannis/uniwa-computer-vision.git"
 OUTPUT = Path(__file__).resolve().parents[1] / "notebooks" / "kaggle_proxy_run.ipynb"
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--smoke", action="store_true",
+                    help="Emit the 10-min smoke variant (otherwise full ~2 h run).")
+args = parser.parse_args()
+SMOKE_DEFAULT = args.smoke
 
 nb = nbf.v4.new_notebook()
 nb.metadata = {
@@ -46,8 +54,8 @@ Full pipeline on a 3-class EuroSAT proxy (no xBD required):
 A run with `SMOKE = False` takes ~2 h on a P100; with `SMOKE = True` it finishes
 in ~10 min and is meant to validate the wiring end-to-end before the long run."""),
 
-    code("""# Toggle for a 10-min smoke validation vs the full ~2-h run.
-SMOKE = True
+    code(f"""# Toggle for a 10-min smoke validation vs the full ~2-h run.
+SMOKE = {SMOKE_DEFAULT}
 
 # Proxy class set (must match prompt templates in cv_diffusion/preprocessing/prompts.py)
 CLASSES = ["forest", "residential_buildings", "river"]
