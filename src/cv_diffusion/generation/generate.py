@@ -113,6 +113,7 @@ def generate_synthetic_dataset(
         writer = csv.writer(f)
         writer.writerow(["filename", "category", "prompt", "seed"])
 
+        import sys as _sys, time as _time
         for job in jobs:
             cls_dir = ensure_dir(output_root / job.category)
             n_done = 0
@@ -132,6 +133,12 @@ def generate_synthetic_dataset(
                     seed=local_seed,
                     scheduler=config.scheduler,
                 )
+                # Per-batch progress with explicit flush so Kaggle's log surfaces
+                # even mid-run. Lets us see exactly where a hang occurs.
+                _t0 = _time.time()
+                logger.info("  [%s] batch start: n_done=%d/%d seed=%d",
+                            job.category, n_done, job.num_images, local_seed)
+                _sys.stdout.flush(); _sys.stderr.flush()
                 images = wrapper.generate(params)
                 for i, image in enumerate(images):
                     idx = n_done + i
@@ -140,6 +147,9 @@ def generate_synthetic_dataset(
                     writer.writerow([f"{job.category}/{filename}", job.category, prompts[i], local_seed])
                 n_done += len(images)
                 local_seed += 1
+                logger.info("  [%s] batch done : n_done=%d/%d  %.1f s",
+                            job.category, n_done, job.num_images, _time.time() - _t0)
+                _sys.stdout.flush(); _sys.stderr.flush()
 
     logger.info("Synthetic dataset written to %s", output_root)
     return output_root

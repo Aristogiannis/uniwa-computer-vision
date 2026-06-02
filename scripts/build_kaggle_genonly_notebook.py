@@ -54,18 +54,20 @@ Reuse the **4000-step LoRA adapter** from v7 and finish the pipeline:
 
 ETA on Kaggle P100: ~2-3 h."""),
 
-    code("""# Per-class synthetic budget; classifier epochs per arm
+    code("""# Per-class synthetic budget; classifier epochs per arm.
+# v9 reduces scope after v7 (200 imgs/class, stalled silently) and v8
+# (200 imgs/class @ float32, also stalled 9 h+ without surfaced log).
 CLASSES = ["forest", "residential_buildings", "river"]
-SYNTH_PER_CLASS = 200
+SYNTH_PER_CLASS = 50            # was 200 in v8 — quarter the work
 GEN_RESOLUTION  = 256
 GEN_STEPS       = 20            # was 30 in v7; 20 is a safe budget
 GEN_BATCH       = 1             # was 4 in v7; 1 dodges VRAM edges on P100
-GEN_DTYPE       = "float32"     # was float16; fp16 attention may have stalled v7
-GEN_TIMEOUT_S   = 90 * 60       # hard cap per cv-generate invocation
+GEN_DTYPE       = "float32"     # was float16 in v7; safer on Pascal sm_60
+GEN_TIMEOUT_S   = 45 * 60       # was 90 m — tighter so a hang surfaces sooner
 CLF_EPOCHS      = 8
 print(f"CLASSES={CLASSES} | SYNTH_PER_CLASS={SYNTH_PER_CLASS} | "
       f"GEN_STEPS={GEN_STEPS} | GEN_BATCH={GEN_BATCH} | GEN_DTYPE={GEN_DTYPE} | "
-      f"CLF_EPOCHS={CLF_EPOCHS}")"""),
+      f"GEN_TIMEOUT_S={GEN_TIMEOUT_S} | CLF_EPOCHS={CLF_EPOCHS}")"""),
 
     md("""## 1. Clone repo + install + GPU sanity (with torch swap)"""),
 
