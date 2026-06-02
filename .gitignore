@@ -54,6 +54,9 @@ checkpoints/
 *.safetensors
 *.bin
 *.pth
+# Whitelist the bundled v7 LoRA adapter (6.4 MB) so the v8 Kaggle notebook
+# can clone the repo and use it without an external dataset.
+!notebooks/lora_v7_4000steps/pytorch_lora_weights.safetensors
 
 # Hugging Face cache
 .cache/
