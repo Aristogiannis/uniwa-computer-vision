@@ -96,7 +96,14 @@ def push(folder: Path) -> dict[str, Any]:
     if r.status_code >= 400:
         raise SystemExit(f"push failed: HTTP {r.status_code}\n{r.text[:2000]}")
     body = r.json()
-    body["_slug"] = slug
+    # Trust Kaggle's `ref` ("/code/<owner>/<slug>") over the metadata id —
+    # Kaggle slugifies the title and ignores the metadata id when they
+    # disagree, then later API calls 403 against the metadata id.
+    ref = body.get("ref") or body.get("Ref") or ""
+    actual = ref.lstrip("/")
+    if actual.startswith("code/"):
+        actual = actual[len("code/"):]
+    body["_slug"] = actual or slug
     return body
 
 
