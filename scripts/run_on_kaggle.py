@@ -102,20 +102,46 @@ def push(folder: Path) -> dict[str, Any]:
 
 def status(slug: str) -> dict[str, Any]:
     user, k = slug.split("/", 1)
-    r = _session().get(
-        f"{API_ROOT}/kernels/status",
-        params={"user_name": user, "kernel_slug": k},
-        timeout=30,
-    )
-    if r.status_code >= 400:
-        raise SystemExit(f"status failed: HTTP {r.status_code}\n{r.text[:2000]}")
-    return r.json()
+    # Retry transient connection failures (TLS drops, DNS hiccups, brief
+    # offline periods) generously — the kernel is running on Kaggle's side
+    # and there's no reason to abandon the poll because of local-side flakes.
+    # Budget: 30 attempts capped at 5 min apart = ~tolerates ~2 h of network
+    # weather. Enough for a multi-hour LoRA run.
+    last_exc: Exception | None = None
+    for i in range(30):
+        try:
+            r = _session().get(
+                f"{API_ROOT}/kernels/status",
+                params={"user_name": user, "kernel_slug": k},
+                timeout=30,
+            )
+            if r.status_code >= 400:
+                raise SystemExit(f"status failed: HTTP {r.status_code}\n{r.text[:2000]}")
+            return r.json()
+        except (requests.exceptions.SSLError,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout) as e:
+            last_exc = e
+            wait = min(300, 2 ** (i + 2))
+            print(f"  status transient {type(e).__name__}; retry in {wait}s", flush=True)
+            time.sleep(wait)
+    raise SystemExit(f"status kept failing after retries: {last_exc}")
 
 
 def _get_with_retry(sess: requests.Session, url: str, params: dict, attempts: int = 6):
     last_text = ""
+    last_exc: Exception | None = None
     for i in range(attempts):
-        r = sess.get(url, params=params, timeout=60)
+        try:
+            r = sess.get(url, params=params, timeout=60)
+        except (requests.exceptions.SSLError,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout) as e:
+            last_exc = e
+            wait = min(60, 2 ** (i + 2))
+            print(f"  GET {url} -> {type(e).__name__}; retry in {wait}s")
+            time.sleep(wait)
+            continue
         if r.status_code < 400:
             return r
         last_text = r.text[:400]
@@ -126,7 +152,7 @@ def _get_with_retry(sess: requests.Session, url: str, params: dict, attempts: in
         wait = 60 if r.status_code == 429 else min(120, 2 ** (i + 3))
         print(f"  GET {url} -> HTTP {r.status_code}; retry in {wait}s")
         time.sleep(wait)
-    raise SystemExit(f"GET {url} kept failing: {last_text}")
+    raise SystemExit(f"GET {url} kept failing: {last_text or last_exc}")
 
 
 def download_output(slug: str, out_dir: Path) -> None:
