@@ -6,11 +6,30 @@ Built artifacts for the ICE-8111 final exemption project.
 
 | File | What |
 |---|---|
-| `report.tex`   | 4–6 page written report (LaTeX article, 12 pt) |
+| `report.md`    | 4–6 page report in Markdown (same content as the .tex) |
+| `report.tex`   | LaTeX article version of the same report (12 pt) |
 | `slides.tex`   | 10-slide Beamer deck (Metropolis theme) |
 | `references.bib` | Bibliography (copied from `docs/references.bib`) |
 | `figures/`     | All PNGs included by the documents |
 | `Makefile`     | `make` to produce `report.pdf` via latexmk |
+
+## Rendering report.md to PDF
+
+The Markdown file is portable but for submission you'll want a paginated PDF. Three options ranked by friction:
+
+```bash
+# 1. Pandoc + a TeX engine — best fidelity
+pandoc report.md -o report.pdf \
+  --pdf-engine=xelatex --resource-path=. \
+  -V geometry:margin=2.4cm -V fontsize=12pt
+
+# 2. Pandoc + WeasyPrint — no TeX required (brew install pandoc weasyprint)
+pandoc report.md -o report.pdf --pdf-engine=weasyprint
+
+# 3. VS Code / Cursor "Markdown PDF" extension — one-click export
+```
+
+If you submit the Markdown directly, GitHub renders it natively with the figures inlined.
 
 ## Building locally
 
